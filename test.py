@@ -4,9 +4,6 @@ import torch
 import torch.nn as nn
 import mediapipe as mp
 
-########################################
-# CONFIGURATION
-########################################
 MODEL_PATH = "action_lstm1.pth"
 SEQUENCE_LENGTH = 30
 FEATURE_SIZE = 1662
@@ -15,9 +12,6 @@ CONFIDENCE_THRESHOLD = 0.80
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-########################################
-# LSTM MODEL DEFINITION
-########################################
 class ActionLSTM(nn.Module):
     def __init__(self, num_classes):
         super(ActionLSTM, self).__init__()
@@ -37,7 +31,7 @@ class ActionLSTM(nn.Module):
         x, _ = self.lstm2(x)
         x, _ = self.lstm3(x)
 
-        x = x[:, -1, :]   # last timestep
+        x = x[:, -1, :] 
 
         x = self.relu(self.fc1(x))
         x = self.relu(self.fc2(x))
@@ -45,18 +39,12 @@ class ActionLSTM(nn.Module):
 
         return x
 
-########################################
-# LOAD MODEL
-########################################
 model = ActionLSTM(num_classes=len(ACTIONS)).to(device)
 model.load_state_dict(torch.load(MODEL_PATH, map_location=device))
 model.eval()
 
-print("✅ Model loaded successfully")
+print("Model loaded successfully")
 
-########################################
-# MEDIAPIPE HOLISTIC SETUP
-########################################
 mp_holistic = mp.solutions.holistic
 mp_drawing = mp.solutions.drawing_utils
 
@@ -65,9 +53,6 @@ holistic = mp_holistic.Holistic(
     min_tracking_confidence=0.5
 )
 
-########################################
-# LANDMARK EXTRACTION (1662 FEATURES)
-########################################
 def extract_keypoints(results):
     pose = np.array([[p.x, p.y, p.z, p.visibility]
                      for p in results.pose_landmarks.landmark]).flatten() \
@@ -87,14 +72,11 @@ def extract_keypoints(results):
 
     return np.concatenate([pose, face, lh, rh])
 
-########################################
-# REAL-TIME WEBCAM INFERENCE
-########################################
 sequence = []
 
 cap = cv2.VideoCapture(0)
 
-print("🎥 Webcam started — Press 'q' to quit")
+print(" Webcam started — Press 'q' to quit")
 
 with holistic:
     while cap.isOpened():
@@ -143,4 +125,4 @@ with holistic:
 
 cap.release()
 cv2.destroyAllWindows()
-print("🛑 Webcam stopped")
+print(" Webcam stopped")
